@@ -1,0 +1,7 @@
+This directory is intended for PlatformIO Unit Testing and project tests.
+
+Unit Testing is a software testing method by which individual units of source
+code are tested to determine whether they are fit for use.
+
+More information about PlatformIO Unit Testing:
+https://docs.platformio.org/page/plus/unit-testing.html
