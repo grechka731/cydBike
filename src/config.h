@@ -6,7 +6,12 @@
 
 #define SERVO_PIN 1
 
-static const int GEAR_ANGLES[3] = { 40, 145, 180 };
+// Default angle for each gear (gear1, gear2, gear3). Gear 3 is set to 200 -
+// only used as the *default* the very first time the device boots (or after
+// a settings reset); if you already calibrated gear 3 before, this value
+// alone won't move it - go to the on-device Servo Calibration screen,
+// select gear 3, and Save the new angle there so it's written to NVS.
+static const int GEAR_ANGLES[3] = { 40, 145, 220 };
 
 static const int NUM_GEARS_MAX     = 8;
 static const int DEFAULT_NUM_GEARS = 3;
@@ -16,20 +21,51 @@ static const int NUM_GEARS = 3;
 static const int GEAR2_DOWNSHIFT_ANGLE = 115;
 
 static const int ANGLE_MIN = 0;
-static const int ANGLE_MAX = 180;
+// Raised from 180 so gear angles up to ~200-210 can be tried/calibrated.
+// IMPORTANT: this is just the software ceiling - it does NOT mean the servo
+// can safely reach that angle. A DB961WP is a standard digital servo, not
+// a wide-throw actuator: it has its own internal end-point limit, and
+// commanding it past that limit makes it stall against its own stop and
+// draw extra current instead of moving further (the exact kind of current
+// spike that was browning out the battery before). Always find the real
+// safe value using the on-device Servo Calibration screen (jog with
+// +1/+10, watching/listening for straining) rather than typing a number in
+// blind - and back off the moment it starts straining without moving.
+static const int ANGLE_MAX = 220;
 
 static const int SERVO_CAL_MIN_DEFAULT = 40;
-static const int SERVO_CAL_MAX_DEFAULT = 180;
+static const int SERVO_CAL_MAX_DEFAULT = 200;
 
 static const int SERVO_BACKLASH_DEG    = 6;
 
+// --- Servo movement speed ---
+// Slower steps = less current spike per pulse
 static const int SERVO_STEP_DEG_UP        = 1;
-static const int SERVO_STEP_DELAY_UP_MS   = 6;
-static const int SERVO_REST_EVERY_DEG     = 10;
-static const int SERVO_REST_PAUSE_MS      = 90;
+static const int SERVO_STEP_DELAY_UP_MS   = 10;   // было 6 → дольше пауза между шагами
+static const int SERVO_REST_EVERY_DEG     = 8;    // было 10 → чаще паузы
+static const int SERVO_REST_PAUSE_MS      = 150;  // было 90 → длиннее пауза для восстановления батареи
 
-static const int SERVO_STEP_DEG_DOWN      = 8;
-static const int SERVO_STEP_DELAY_DOWN_MS = 1;
+static const int SERVO_STEP_DEG_DOWN      = 5;    // было 8 → меньше шаг вниз, меньше пик тока
+static const int SERVO_STEP_DELAY_DOWN_MS = 8;    // было 1 → пауза вниз тоже нужна
+
+// --- Servo power saving / battery-rest options ---
+static const bool          SERVO_RELEASE_WHEN_IDLE  = true;
+// Дольше держим перед отпусканием — серва успевает стабилизироваться
+static const unsigned long SERVO_HOLD_AFTER_MOVE_MS = 800;   // было 500
+// Дольше ждём при старте — дисплей и ESP32 успевают стабилизироваться
+static const unsigned long SERVO_BOOT_SETTLE_MS     = 1200;  // было 600
+static const bool          SERVO_REST_ON_DOWNSHIFT  = true;
+
+// --- Soft-start: сколько шагов разгоняться плавно в начале движения ---
+// Первые N шагов делаем паузу SERVO_SOFTSTART_EXTRA_MS поверх обычной,
+// чтобы не давать резкий пик тока при старте с нуля.
+static const int           SERVO_SOFTSTART_STEPS     = 5;    // первые 5 шагов — плавный старт
+static const int           SERVO_SOFTSTART_EXTRA_MS  = 20;   // доп. задержка на каждый шаг
+
+// --- Re-engage cooldown: минимальная пауза перед повторным включением ---
+// Если серва только что отпустила (de-energized), подождать немного
+// перед следующим движением, чтобы батарея восстановилась.
+static const unsigned long SERVO_REENGAGE_COOLDOWN_MS = 120; // пауза перед повторным включением
 
 static const int LASTKNOWN_SAVE_EVERY_DEG = 10;
 

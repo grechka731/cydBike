@@ -533,6 +533,10 @@ static void enterSleep() {
   screenAsleep = true;
   sleepClockStr[0] = 0;
   renderSleepClock(true);
+  // The rider has stopped for a while and is likely about to switch the
+  // device off. Park the servo at the lowest-angle gear now (gently, no
+  // jerking) so the next power-up has minimal distance to travel.
+  gearControlEnterParkMode();
 }
 
 static void wakeScreen() {

@@ -1,4 +1,3 @@
-<img width="4104" height="3432" alt="bike" src="https://github.com/user-attachments/assets/eb3d4dfb-b644-465a-85d6-93dc74cc98ec" />
 # CYD Bike Computer
 
 A small bike computer + electronic gear shifter that runs on the "Cheap Yellow

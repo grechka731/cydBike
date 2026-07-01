@@ -50,6 +50,8 @@ void loop() {
   updateMpuSpeed();
   rideStatsUpdate();
 
+  gearControlUpdate();   // release the idle servo to give the battery a rest
+
   if (settings().autoShift) {
     autoShiftUpdate(getSpeedKmh());
   }
